@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio do IP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is designed as an interactive flashcard quiz. Instead of a linear slide presentation, it presents one device at a time, asking the user to make a choice ("Tem IP?"). This active participation model is more engaging for learning. A central card displays the device image and question. After the user answers, the card reveals the correct answer and rationale. Navigation is handled by a "Next" button, and a progress tracker keeps the user informed. This structure was chosen to transform passive content consumption into an active learning experience, which is more effective for reinforcing concepts. -->
+    <!-- Visualization & Content Choices: Report Info: Each slide pair (image + answer) from the source. Goal: Test user knowledge interactively. Viz/Presentation Method: An HTML/CSS card-based layout. A single image is shown, and the text answer is revealed upon interaction. Interaction: User clicks "Sim" or "Não" buttons, then a "Próximo" button appears to advance. Justification: This method directly engages the user, forcing them to commit to an answer before seeing the result, which enhances learning and retention. Library/Method: Vanilla JavaScript for logic, Tailwind CSS for styling. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div id="app" class="w-full max-w-md mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-sky-800">Desafio do IP</h1>
+            <p class="text-stone-600 mt-1">Qual destes dispositivos está na rede?</p>
+        </header>
+
+        <main id="quiz-container" class="bg-white p-6 rounded-2xl shadow-lg w-full min-h-[450px] flex flex-col justify-between">
+            
+            <div id="card-content">
+                <div class="aspect-w-16 aspect-h-9 mb-4">
+                    <img id="device-image" src="" alt="Imagem de um dispositivo eletrônico" class="w-full h-48 object-contain rounded-lg bg-stone-100">
+                </div>
+                <h2 id="device-name" class="text-xl font-bold text-center text-stone-900"></h2>
+                <p class="text-center text-stone-600 mt-2">Este dispositivo tem um endereço IP?</p>
+            </div>
+
+            <div id="feedback-section" class="mt-4 text-center hidden">
+                <p id="feedback-text" class="text-lg font-semibold"></p>
+                <p id="feedback-rationale" class="text-stone-600 mt-1"></p>
+            </div>
+
+            <div id="interaction-buttons" class="mt-6 flex flex-col gap-3">
+                <div id="answer-buttons" class="grid grid-cols-2 gap-3">
+                    <button id="yes-button" class="w-full bg-sky-600 text-white font-semibold py-3 rounded-lg hover:bg-sky-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">Sim</button>
+                    <button id="no-button" class="w-full bg-rose-600 text-white font-semibold py-3 rounded-lg hover:bg-rose-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">Não</button>
+                </div>
+                <button id="next-button" class="w-full bg-stone-700 text-white font-semibold py-3 rounded-lg hover:bg-stone-800 transition-colors duration-300 hidden focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-500">Próximo</button>
+            </div>
+            
+        </main>
+
+        <footer class="text-center mt-4">
+            <p id="progress-text" class="text-stone-500"></p>
+        </footer>
+
+        <div id="end-screen" class="hidden text-center p-6 bg-white rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-bold text-sky-800">Parabéns!</h2>
+            <p class="mt-2 text-stone-700">Você completou o Desafio do IP. Continue explorando o fascinante mundo das redes!</p>
+            <button id="restart-button" class="mt-6 bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-sky-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">Recomeçar</button>
+        </div>
+
+    </div>
+
+    <script>
+        const devices = [
+            {
+                name: 'Tela Interativa',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/tela%20interativa.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Sendo uma tela interativa e smart, ela se conecta à internet para acessar conteúdos, aplicativos e funções online, precisando de um IP.'
+            },
+            {
+                name: 'Repetidor / Ponto de Acesso',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/repetidor2.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Este dispositivo precisa de um IP para se conectar à rede principal e para criar ou estender a rede Wi-Fi para outros aparelhos.'
+            },
+            {
+                name: 'Câmera de Segurança',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/cameras.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Câmeras IP (Internet Protocol) usam um endereço IP para enviar o vídeo pela rede, permitindo o acesso remoto.'
+            },
+            {
+                name: 'Celular',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/celular.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Celulares precisam de um IP para se conectar à internet, seja através do Wi-Fi ou da rede de dados móveis (4G/5G).'
+            },
+            {
+                name: 'Ar Condicionado (Não-Smart)',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/ar%20condicionado.jpeg',
+                hasIp: false,
+                rationale: 'Não. Um ar condicionado que não é "smart" funciona apenas com seu controle remoto infravermelho e não se conecta à internet.'
+            },
+            {
+                name: 'Caneta 3D',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/maquina%20fotografica.jpeg',
+                hasIp: false,
+                rationale: 'Não. Canetas 3D funcionam aquecendo um filamento de plástico, como uma pistola de cola quente. Elas não se conectam a nenhuma rede e, portanto, não têm IP.'
+            },
+            {
+                name: 'Notebook',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/nootbook.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Todo computador, incluindo notebooks, precisa de um endereço IP para se comunicar na rede local e acessar a internet.'
+            },
+             {
+                name: 'Máquina Fotográfica (Não-Wifi)',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/maquina%20fotografica.jpeg',
+                hasIp: false,
+                rationale: 'Não. Se a câmera não possui Wi-Fi ou conexão de rede, ela não precisa de um endereço IP. A transferência de fotos é feita por cabo ou cartão de memória.'
+            },
+            {
+                name: 'Óculos de Realidade Virtual',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/oculos%20vr.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Óculos de VR são computadores independentes que precisam de um IP para baixar jogos, navegar na web e interagir em mundos virtuais.'
+            },
+            {
+                name: 'TV (Não-Smart)',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/tv.jpeg',
+                hasIp: false,
+                rationale: 'Não. Uma TV comum, que não se conecta à internet, não possui e nem precisa de um endereço IP. Ela apenas recebe sinal de antena ou cabo.'
+            },
+            {
+                name: 'Projetor (Data Show)',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/data%20show.jpeg',
+                hasIp: false,
+                rationale: 'Provavelmente não. A maioria dos projetores convencionais recebe o sinal de vídeo por um cabo (HDMI, VGA) e não se conecta à rede.'
+            },
+            {
+                name: 'Computador (PC)',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/pc.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Um computador desktop precisa de um endereço IP para se conectar à rede local e à internet, geralmente através de um cabo de rede.'
+            },
+            {
+                name: 'Impressora Multifuncional',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/impressora2.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Impressoras de escritório como esta quase sempre se conectam à rede (via cabo ou Wi-Fi) para serem compartilhadas, precisando de um IP.'
+            },
+            {
+                name: 'Tablets',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/tablets.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Assim como os celulares, tablets usam um endereço IP para se conectar à internet via Wi-Fi para navegar, usar apps e muito mais.'
+            },
+            {
+                name: 'Robô de Programação',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/robo.jpeg',
+                hasIp: true,
+                rationale: 'Provavelmente sim. Muitos robôs educacionais usam Wi-Fi para receber comandos e atualizações de programação, necessitando de um IP.'
+            },
+            {
+                name: 'Switch de Rede',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/switch.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Um switch é um dispositivo central da rede. Switches gerenciáveis possuem um IP para que o administrador possa configurá-los.'
+            },
+            {
+                name: 'Chromebook',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/chromebook.jpeg',
+                hasIp: true,
+                rationale: 'Sim! Chromebooks são notebooks que dependem fortemente da internet, portanto, precisam de um endereço IP para funcionar.'
+            },
+            {
+                name: 'Impressora 3D',
+                image: 'https://raw.githubusercontent.com/alziraramos/ip/refs/heads/main/impressora3d.jpeg',
+                hasIp: true,
+                rationale: 'Provavelmente sim. Muitas impressoras 3D modernas têm conexão de rede para que você possa enviar os modelos para impressão sem usar um cartão SD.'
+            }
+        ];
+
+        let currentDeviceIndex = 0;
+
+        const deviceImage = document.getElementById('device-image');
+        const deviceName = document.getElementById('device-name');
+        const yesButton = document.getElementById('yes-button');
+        const noButton = document.getElementById('no-button');
+        const nextButton = document.getElementById('next-button');
+        const feedbackSection = document.getElementById('feedback-section');
+        const feedbackText = document.getElementById('feedback-text');
+        const feedbackRationale = document.getElementById('feedback-rationale');
+        const progressText = document.getElementById('progress-text');
+        const quizContainer = document.getElementById('quiz-container');
+        const endScreen = document.getElementById('end-screen');
+        const restartButton = document.getElementById('restart-button');
+        const answerButtons = document.getElementById('answer-buttons');
+
+        function loadDevice(index) {
+            if (index >= devices.length) {
+                showEndScreen();
+                return;
+            }
+
+            const device = devices[index];
+            deviceImage.src = device.image;
+            deviceImage.alt = `Imagem de um ${device.name}`;
+            deviceName.textContent = device.name;
+            progressText.textContent = `Dispositivo ${index + 1} de ${devices.length}`;
+
+            resetState();
+        }
+
+        function resetState() {
+            feedbackSection.classList.add('hidden');
+            nextButton.classList.add('hidden');
+            answerButtons.classList.remove('hidden');
+            
+            yesButton.classList.remove('btn-disabled');
+            noButton.classList.remove('btn-disabled');
+            yesButton.disabled = false;
+            noButton.disabled = false;
+
+            feedbackText.classList.remove('text-green-600', 'text-red-600');
+        }
+        
+        function handleAnswer(userAnswer) {
+            const device = devices[currentDeviceIndex];
+            const isCorrect = userAnswer === device.hasIp;
+
+            feedbackSection.classList.remove('hidden');
+            answerButtons.classList.add('hidden');
+            nextButton.classList.remove('hidden');
+
+            yesButton.classList.add('btn-disabled');
+            noButton.classList.add('btn-disabled');
+            yesButton.disabled = true;
+            noButton.disabled = true;
+
+            if (isCorrect) {
+                feedbackText.textContent = 'Correto!';
+                feedbackText.className = 'text-lg font-semibold text-green-600';
+            } else {
+                feedbackText.textContent = 'Incorreto!';
+                feedbackText.className = 'text-lg font-semibold text-red-600';
+            }
+
+            feedbackRationale.textContent = device.rationale;
+        }
+
+        function showEndScreen() {
+            quizContainer.classList.add('hidden');
+            progressText.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+        }
+
+        function restartQuiz() {
+            currentDeviceIndex = 0;
+            endScreen.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            progressText.classList.remove('hidden');
+            loadDevice(currentDeviceIndex);
+        }
+
+        yesButton.addEventListener('click', () => handleAnswer(true));
+        noButton.addEventListener('click', () => handleAnswer(false));
+        
+        nextButton.addEventListener('click', () => {
+            currentDeviceIndex++;
+            loadDevice(currentDeviceIndex);
+        });
+
+        restartButton.addEventListener('click', restartQuiz);
+
+        loadDevice(currentDeviceIndex);
+    </script>
+</body>
+</html>
